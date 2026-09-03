@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>A1 Print Quote</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div class="hero-top">
+          <p class="eyebrow">Bambu Lab A1</p>
+          <nav class="nav">
+            <% if (user) { %>
+              <span><%= user %></span>
+              <a href="/search">Search</a>
+              <% if (isAdmin) { %>
+              <a href="/admin/colors">Colors</a>
+              <% } %>
+              <a href="/logout">Log out</a>
+            <% } else { %>
+              <a href="/search">Search</a>
+              <a href="/login">Log in with Formbar</a>
+            <% } %>
+          </nav>
+        </div>
+        <h1>MakerWorld print quote</h1>
+        <p class="lede">
+          Paste a MakerWorld model link. We’ll check whether it can print on an A1
+          and estimate a price in digipogs from filament weight, colors, and time.
+        </p>
+      </header>
+
+      <form class="card form" method="post" action="/quote">
+        <label for="url">MakerWorld URL</label>
+        <div class="row">
+          <input
+            id="url"
+            name="url"
+            type="url"
+            required
+            placeholder="https://makerworld.com/en/models/3231444-sleeping-dragon-on-an-book#profileId-3660066"
+            value="<%= url %>"
+          />
+          <button type="submit">Get quote</button>
+        </div>
+      </form>
+
+      <% if (error) { %>
+      <div class="card alert" role="alert"><%= error %></div>
+      <% } %>
+      <% if (notice) { %>
+      <div class="card ok" role="status"><%= notice %></div>
+      <% } %>
+
+      <% if (result) { %>
+      <article class="card result">
+        <div class="result-head">
+          <% if (result.coverUrl) { %>
+          <img class="cover" src="<%= result.coverUrl %>" alt="" />
+          <% } %>
+          <div>
+            <h2><%= result.title %></h2>
+            <p class="profile"><%= result.profileTitle %></p>
+            <p>
+              <a href="<%= result.makerworldUrl %>" target="_blank" rel="noopener">
+                Open on MakerWorld
+              </a>
+            </p>
+          </div>
+        </div>
+
+        <% if (result.a1.printable) { %>
+          <% if (result.a1.warning) { %>
+          <p class="warning"><%= result.a1.warning %></p>
+          <% } else { %>
+          <p class="ok">This profile can print on an A1.</p>
+          <% } %>
+
+          <form method="post" action="/queue" id="queue-form">
+            <input type="hidden" name="url" value="<%= url %>" />
+
+          <dl class="stats">
+            <div>
+              <dt>Weight</dt>
+              <dd><%= result.quote.grams %> g</dd>
+            </div>
+            <div>
+              <dt>Colors</dt>
+              <dd id="quote-color-count"><%= result.quote.colors %></dd>
+            </div>
+            <div>
+              <dt>Time</dt>
+              <dd><%= result.quote.formatted.duration %></dd>
+            </div>
+            <% if (result.nozzle) { %>
+            <div>
+              <dt>Nozzle</dt>
+              <dd><%= result.nozzle %> mm</dd>
+            </div>
+            <% } %>
+          </dl>
+
+          <dl class="stats filament-stats">
+            <% result.filaments.forEach(function (f, i) { %>
+            <div class="filament-card" data-grams="<%= f.usedG %>" data-default-material="<%= f.type %>" data-default-color="<%= f.color %>" data-default-price="<%= result.quote.rates.digipogsPerGram %>">
+              <dt class="filament-material"><%= f.type %></dt>
+              <dd><%= f.usedG %> g</dd>
+              <label class="filament-pick">
+                <span class="dot filament-swatch" style="background: <%= f.color %>"></span>
+                <select class="filament-select" name="slot_<%= i %>" aria-label="Color for slot <%= i + 1 %>">
+                  <option value="default" selected>Default · <%= f.type %> · <%= result.quote.rates.digipogsPerGram %>/g</option>
+                  <% result.catalog.forEach(function (c) { %>
+                  <option
+                    value="<%= c.id %>"
+                    data-material="<%= c.material %>"
+                    data-color="<%= c.color %>"
+                    data-price="<%= c.pricePerGram %>"
+                    data-name="<%= c.name %>"
+                  ><%= c.material %> <%= c.name %> · <%= c.pricePerGram %>/g</option>
+                  <% }) %>
+                </select>
+              </label>
+            </div>
+            <% }) %>
+          </dl>
+
+          <h3>Price</h3>
+          <% const priceRates = locals.pricing || result.quote.rates; %>
+          <table
+            class="breakdown"
+            id="quote-breakdown"
+            data-color-start="<%= priceRates.colorMultiplierStart %>"
+            data-color-extra="<%= priceRates.colorMultiplierPerExtra %>"
+            data-time-start="<%= priceRates.timeMultiplierStart %>"
+            data-time-per-block="<%= priceRates.timeMultiplierPerBlock %>"
+            data-time-block-hours="<%= priceRates.timeBlockHours %>"
+            data-seconds="<%= result.quote.seconds %>"
+          >
+            <tr>
+              <th id="quote-base-label">Base (<%= result.quote.grams %> g × <%= result.quote.rates.digipogsPerGram %> digipogs/g)</th>
+              <td id="quote-base"><%= result.quote.formatted.base %></td>
+            </tr>
+            <tr>
+              <th id="quote-color-label">Color multiplier (<%= priceRates.colorMultiplierStart %>× first color + <%= priceRates.colorMultiplierPerExtra %>× each extra · <%= result.quote.colors %> color<%= result.quote.colors === 1 ? "" : "s" %>)</th>
+              <td id="quote-color"><%= result.quote.formatted.colorMultiplier %></td>
+            </tr>
+            <tr>
+              <th id="quote-time-label">Time multiplier (<%= priceRates.timeMultiplierStart %> + <%= priceRates.timeMultiplierPerBlock %> per <%= priceRates.timeBlockHours %>h · <%= result.quote.formatted.duration %>)</th>
+              <td id="quote-time"><%= result.quote.formatted.timeMultiplier %></td>
+            </tr>
+            <tr class="total">
+              <th>Total</th>
+              <td id="quote-total"><%= result.quote.formatted.total %></td>
+            </tr>
+          </table>
+
+          <% if (user) { %>
+          <div class="pay-row">
+            <label for="pin">Digipog PIN</label>
+            <input id="pin" name="pin" type="password" inputmode="numeric" required autocomplete="off" />
+            <button type="submit">Pay and add to queue</button>
+          </div>
+          <% } else { %>
+          <p class="warning">Log in with Formbar to pay and join the print queue.</p>
+          <% } %>
+          </form>
+          <script type="application/json" id="quote-rates"><%- JSON.stringify({
+            colorMultiplierStart: priceRates.colorMultiplierStart,
+            colorMultiplierPerExtra: priceRates.colorMultiplierPerExtra,
+            timeMultiplierStart: priceRates.timeMultiplierStart,
+            timeMultiplierPerBlock: priceRates.timeMultiplierPerBlock,
+            timeBlockHours: priceRates.timeBlockHours,
+            seconds: result.quote.seconds,
+            grams: result.quote.grams,
+            digipogsPerGram: result.quote.rates.digipogsPerGram
+          }) %></script>
+          <script src="/quote.js?v=6"></script>
+        <% } else { %>
+          <p class="reject">Not quoted for an A1</p>
+          <ul class="reasons">
+            <% result.a1.reasons.forEach(function (r) { %>
+            <li><%= r %></li>
+            <% }) %>
+          </ul>
+        <% } %>
+      </article>
+      <% } %>
+
+      <section class="card">
+        <h2>Print queue</h2>
+        <% if (!queue.length) { %>
+        <p class="muted">No jobs waiting.</p>
+        <% } else { %>
+        <ol class="queue">
+          <% queue.forEach(function (job, i) { %>
+          <li>
+            <button
+              type="button"
+              class="model-open queue-open"
+              data-id="<%= job.model_id %>"
+              aria-haspopup="dialog"
+            >
+              <div class="queue-main">
+                <strong><%= i + 1 %>. <%= job.title %></strong>
+                <span class="muted"><%= job.user_name %> · <%= job.amount %> digipogs</span>
+              </div>
+            </button>
+            <% if (isAdmin) { %>
+            <div class="queue-actions">
+              <form method="post" action="/queue/<%= job.id %>/complete">
+                <button type="submit">Complete</button>
+              </form>
+              <form method="post" action="/queue/<%= job.id %>/refund">
+                <button type="submit" class="danger">Refund</button>
+              </form>
+            </div>
+            <% } %>
+          </li>
+          <% }) %>
+        </ol>
+        <% } %>
+      </section>
+
+      <section class="card">
+        <h2>Most printed</h2>
+        <% if (!topModels.length) { %>
+        <p class="muted">No completed prints yet.</p>
+        <% } else { %>
+        <ol class="top-models">
+          <% topModels.forEach(function (m) { %>
+          <li>
+            <button
+              type="button"
+              class="model-open top-model-open"
+              data-id="<%= m.model_id %>"
+              aria-haspopup="dialog"
+            >
+              <% if (m.cover_url) { %>
+              <img src="<%= m.cover_url %>" alt="" />
+              <% } %>
+              <span><%= m.title %></span>
+              <strong><%= m.print_count %></strong>
+            </button>
+          </li>
+          <% }) %>
+        </ol>
+        <% } %>
+      </section>
+    </main>
+
+    <dialog class="model-modal" id="model-modal">
+      <div class="model-modal-head">
+        <h2 id="model-title">Model</h2>
+        <button type="button" class="ghost" id="model-close">Close</button>
+      </div>
+      <p class="muted" id="model-creator"></p>
+      <div class="model-photos" id="model-photos"></div>
+      <p class="model-summary" id="model-summary"></p>
+      <p class="muted" id="model-error" hidden></p>
+      <div class="model-actions">
+        <button type="button" id="model-quote-btn" disabled>Load quote</button>
+        <a id="model-mw-link" href="#" target="_blank" rel="noopener">Open on MakerWorld</a>
+      </div>
+    </dialog>
+    <script src="/search.js?v=3"></script>
+  </body>
+</html>

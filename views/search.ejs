@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Search MakerWorld</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="page page-wide">
+      <header class="hero">
+        <div class="hero-top">
+          <p class="eyebrow">Bambu Lab A1</p>
+          <nav class="nav">
+            <a href="/">Home</a>
+            <% if (user) { %>
+              <span><%= user %></span>
+              <% if (isAdmin) { %>
+              <a href="/admin/colors">Colors</a>
+              <% } %>
+              <a href="/logout">Log out</a>
+            <% } else { %>
+              <a href="/login">Log in with Formbar</a>
+            <% } %>
+          </nav>
+        </div>
+        <h1>Search MakerWorld</h1>
+        <p class="lede">
+          Find a model that can print on an A1, preview photos and the
+          description, then load it into a quote.
+        </p>
+      </header>
+
+      <form class="card form" method="get" action="/search">
+        <label for="q">Keyword</label>
+        <div class="row">
+          <input
+            id="q"
+            name="q"
+            type="search"
+            placeholder="dragon, keychain, organizer…"
+            value="<%= q %>"
+          />
+          <button type="submit">Search</button>
+        </div>
+      </form>
+
+      <% if (error) { %>
+      <div class="card alert" role="alert"><%= error %></div>
+      <% } %>
+
+      <% if (!error) { %>
+      <p class="search-meta">
+        <% if (q) { %>
+          A1-printable results for “<%= q %>”
+        <% } else { %>
+          Popular A1-printable models
+        <% } %>
+        <% if (hits.length) { %> · page <%= page %><% } %>
+      </p>
+
+      <% if (!hits.length) { %>
+      <div class="card"><p class="muted">No A1-printable models found.</p></div>
+      <% } else { %>
+      <ul class="search-grid">
+        <% hits.forEach(function (hit) { %>
+        <li>
+          <button
+            type="button"
+            class="search-card"
+            data-id="<%= hit.id %>"
+            aria-haspopup="dialog"
+          >
+            <% if (hit.cover) { %>
+            <img src="<%= hit.cover %>" alt="" />
+            <% } else { %>
+            <div class="search-card-placeholder"></div>
+            <% } %>
+            <span class="search-card-title"><%= hit.title %></span>
+            <% if (hit.creator) { %>
+            <span class="muted"><%= hit.creator %></span>
+            <% } %>
+          </button>
+        </li>
+        <% }) %>
+      </ul>
+      <% } %>
+
+      <% if (hasPrev || hasNext) { %>
+      <nav class="pager" aria-label="Search pages">
+        <% if (hasPrev) { %>
+        <a href="/search?q=<%= encodeURIComponent(q) %>&amp;page=<%= page - 1 %>">Previous</a>
+        <% } else { %>
+        <span class="muted">Previous</span>
+        <% } %>
+        <% if (hasNext) { %>
+        <a href="/search?q=<%= encodeURIComponent(q) %>&amp;page=<%= page + 1 %>">Next</a>
+        <% } else { %>
+        <span class="muted">Next</span>
+        <% } %>
+      </nav>
+      <% } %>
+      <% } %>
+    </main>
+
+    <dialog class="model-modal" id="model-modal">
+      <div class="model-modal-head">
+        <h2 id="model-title">Model</h2>
+        <button type="button" class="ghost" id="model-close">Close</button>
+      </div>
+      <p class="muted" id="model-creator"></p>
+      <div class="model-photos" id="model-photos"></div>
+      <p class="model-summary" id="model-summary"></p>
+      <p class="muted" id="model-error" hidden></p>
+      <div class="model-actions">
+        <button type="button" id="model-quote-btn" disabled>Load quote</button>
+        <a id="model-mw-link" href="#" target="_blank" rel="noopener">Open on MakerWorld</a>
+      </div>
+    </dialog>
+    <script src="/search.js?v=3"></script>
+  </body>
+</html>

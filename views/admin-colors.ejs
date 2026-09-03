@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Filament colors</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div class="hero-top">
+          <p class="eyebrow">Admin</p>
+          <nav class="nav">
+            <a href="/">Home</a>
+            <a href="/search">Search</a>
+            <span><%= user %></span>
+            <a href="/logout">Log out</a>
+          </nav>
+        </div>
+        <h1>Filament colors</h1>
+        <p class="lede">Add, edit, or remove colors used on quotes. Price is digipogs per gram.</p>
+      </header>
+
+      <% if (error) { %>
+      <div class="card alert" role="alert"><%= error %></div>
+      <% } %>
+      <% if (notice) { %>
+      <div class="card ok" role="status"><%= notice %></div>
+      <% } %>
+
+      <section class="card">
+        <h2>Add color</h2>
+        <form class="color-form" method="post" action="/admin/colors">
+          <label>Material <input name="material" required placeholder="PLA" /></label>
+          <label>Name <input name="name" required placeholder="Jade White" /></label>
+          <label>Hex <input name="color" required placeholder="#FFFFFF" /></label>
+          <label>Price/g <input name="price_per_gram" type="number" step="0.1" min="0" required value="10" /></label>
+          <button type="submit">Add</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Catalog</h2>
+        <% filaments.forEach(function (f) { %>
+        <form class="color-form color-row" method="post" action="/admin/colors/<%= f.id %>">
+          <span class="dot" style="background: <%= f.color %>"></span>
+          <input name="material" value="<%= f.material %>" required />
+          <input name="name" value="<%= f.name %>" required />
+          <input name="color" value="<%= f.color %>" required />
+          <input name="price_per_gram" type="number" step="0.1" min="0" value="<%= f.price_per_gram %>" required />
+          <button type="submit">Save</button>
+        </form>
+        <form class="inline-delete" method="post" action="/admin/colors/<%= f.id %>/delete" onsubmit="return confirm('Delete this color?');">
+          <button type="submit" class="danger">Delete</button>
+        </form>
+        <% }) %>
+      </section>
+    </main>
+  </body>
+</html>
