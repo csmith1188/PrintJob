@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+  <body style="font-family: sans-serif; line-height: 1.5; color: #222;">
+    <h2>New print in the queue</h2>
+    <p><strong><%= job.title %></strong> was ordered by <%= job.userName %>.</p>
+    <ul>
+      <li>Job #<%= job.id %></li>
+      <li>Cost: <%= job.amount %> digipogs</li>
+      <% if (job.userEmail) { %><li>User email: <%= job.userEmail %></li><% } %>
+    </ul>
+    <p><a href="<%- url %>">Open the print queue</a></p>
+  </body>
+</html>

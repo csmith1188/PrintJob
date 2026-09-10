@@ -21,6 +21,7 @@ const {
   instanceFilaments,
   collectPrinterNames,
   nozzleDiameter,
+  instancePlateCount,
   designPictures,
   designSummaryText,
   makerworldModelUrl,
@@ -41,12 +42,17 @@ const {
   insertJob,
   insertTransfer,
   getJob,
+  startJob,
   completeJob,
   refundJob,
   slugify,
   validHex,
 } = require("./lib/store");
-const { all, get, run } = require("./lib/db");
+const { all, get, run, ensureSchema } = require("./lib/db");
+const {
+  notifyAdminNewPrint,
+  notifyUserPrintComplete,
+} = require("./lib/mail");
 
 const app = express();
 const fileEnv = projectEnv();
@@ -107,6 +113,10 @@ function requireAdmin(req, res, next) {
   res.status(403).send("Admin only.");
 }
 
+function isActiveQueueJob(job) {
+  return job && (job.status === "queued" || job.status === "started");
+}
+
 async function layout(req, extra = {}) {
   const [queue, topModels, pricing] = await Promise.all([
     listQueuedJobs(),
@@ -152,6 +162,7 @@ async function buildQuote(url) {
         grams: Number(instance.weight),
         colors: a1.colors,
         seconds: Number(instance.prediction),
+        plates: instancePlateCount(instance),
         slots: filaments.map((f) => ({
           grams: Number(f.usedG) || 0,
           pricePerGram: rates.digipogsPerGram,
@@ -216,6 +227,15 @@ function formbarUserIdFromToken(tokenData) {
   return Number.isInteger(id) && id > 0 ? id : null;
 }
 
+function formbarEmailFromToken(tokenData) {
+  const email = String(
+    (tokenData && (tokenData.email || tokenData.mail)) || ""
+  )
+    .trim()
+    .toLowerCase();
+  return email || null;
+}
+
 function quotePageResult(built, quote) {
   return {
     title: built.design.title,
@@ -247,6 +267,7 @@ app.get("/login", (req, res) => {
     req.session.token = tokenData;
     req.session.user = tokenData.displayName;
     req.session.userId = userId;
+    req.session.userEmail = formbarEmailFromToken(tokenData);
     return res.redirect("/");
   }
   const redirectURL = encodeURIComponent(`${THIS_URL}/login`);
@@ -365,6 +386,7 @@ app.post("/queue", requireAuth, async (req, res) => {
         grams: Number(built.instance.weight),
         colors: built.a1.colors,
         seconds: Number(built.instance.prediction),
+        plates: instancePlateCount(built.instance),
         slots,
       },
       built.rates
@@ -402,6 +424,8 @@ app.post("/queue", requireAuth, async (req, res) => {
     const jobId = await insertJob({
       userId: senderId,
       userName: req.session.user,
+      userEmail:
+        formbarEmailFromToken(token) || req.session.userEmail || null,
       modelId: built.design.id,
       instanceId: built.instance.id,
       title: built.design.title,
@@ -426,6 +450,15 @@ app.post("/queue", requireAuth, async (req, res) => {
       message: transfer.message,
     });
 
+    void notifyAdminNewPrint({
+      id: jobId,
+      title: built.design.title,
+      userName: req.session.user,
+      userEmail:
+        formbarEmailFromToken(token) || req.session.userEmail || null,
+      amount,
+    });
+
     res.render(
       "index",
       await layout(req, {
@@ -445,18 +478,28 @@ app.post("/queue", requireAuth, async (req, res) => {
   }
 });
 
-app.post("/queue/:id/complete", requireAuth, requireAdmin, async (req, res) => {
+app.post("/queue/:id/start", requireAuth, requireAdmin, async (req, res) => {
   const job = await getJob(req.params.id);
   if (!job || job.status !== "queued") {
-    return res.status(400).send("Job is not in the queue.");
+    return res.status(400).send("Job is not waiting to be started.");
   }
-  await completeJob(job.id, job.title, job.cover_url, job.model_id);
+  await startJob(job.id);
   res.redirect("/");
 });
 
-app.post("/queue/:id/refund", requireAuth, requireAdmin, async (req, res) => {
+app.post("/queue/:id/complete", requireAuth, requireAdmin, async (req, res) => {
   const job = await getJob(req.params.id);
-  if (!job || job.status !== "queued") {
+  if (!isActiveQueueJob(job)) {
+    return res.status(400).send("Job is not in the queue.");
+  }
+  await completeJob(job.id, job.title, job.cover_url, job.model_id);
+  void notifyUserPrintComplete(job);
+  res.redirect("/");
+});
+
+app.post("/queue/:id/delete", requireAuth, requireAdmin, async (req, res) => {
+  const job = await getJob(req.params.id);
+  if (!isActiveQueueJob(job)) {
     return res.status(400).send("Job is not in the queue.");
   }
   if (!POOL_PIN) {
@@ -567,10 +610,11 @@ app.get("/api/pricing", async (_req, res) => {
 });
 
 app.listen(PORT, async () => {
+  await ensureSchema();
   await syncPricingSettings();
   const rates = await loadPricing();
   console.log(`A1 quote site listening on http://localhost:${PORT}`);
   console.log(
-    `Pricing from .env: color extra ${rates.colorMultiplierPerExtra}×, time ${rates.timeMultiplierPerBlock}× per ${rates.timeBlockHours}h`
+    `Pricing from .env: color extra ${rates.colorMultiplierPerExtra}×, time ${rates.timeMultiplierPerBlock}× per ${rates.timeBlockHours}h, plate fee ${rates.plateFeePerPlate}/plate`
   );
 });

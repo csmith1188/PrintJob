@@ -12,6 +12,7 @@ const SETTINGS = {
   time_block_hours: "4",
   time_multiplier_start: "1",
   time_multiplier_per_block: "0.1",
+  plate_fee_per_plate: "1000",
 };
 
 const FILAMENTS = [

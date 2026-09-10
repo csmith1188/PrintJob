@@ -102,6 +102,8 @@ function readRates() {
       d.timePerBlock ?? fromJson.timeMultiplierPerBlock
     ),
     timeBlockHours: Number(d.timeBlockHours ?? fromJson.timeBlockHours),
+    plateFeePerPlate: Number(d.plateFee ?? fromJson.plateFeePerPlate),
+    plates: Number(d.plates ?? fromJson.plates) || 1,
     seconds: Number(d.seconds ?? fromJson.seconds),
   };
 }
@@ -129,8 +131,11 @@ function updateQuote() {
   const timeBlocks = Math.floor(hours / rates.timeBlockHours);
   const timeMultiplier =
     rates.timeMultiplierStart + rates.timeMultiplierPerBlock * timeBlocks;
-  const total = roundPogs(base * colorMultiplier * timeMultiplier);
+  const plateCount = Math.max(1, Math.floor(rates.plates) || 1);
+  const plateFee = plateCount * rates.plateFeePerPlate;
+  const total = roundPogs(base * colorMultiplier * timeMultiplier + plateFee);
   const colorWord = colorCount === 1 ? "color" : "colors";
+  const plateWord = plateCount === 1 ? "plate" : "plates";
   const colorRule = `${formatMultiplier(rates.colorMultiplierStart)} first color + ${formatMultiplier(rates.colorMultiplierPerExtra)} each extra`;
   const timeRule = `${formatPlain(rates.timeMultiplierStart)} + ${formatPlain(rates.timeMultiplierPerBlock)} per ${rates.timeBlockHours}h`;
 
@@ -141,6 +146,9 @@ function updateQuote() {
   const colorCell = document.getElementById("quote-color");
   const timeLabel = document.getElementById("quote-time-label");
   const timeCell = document.getElementById("quote-time");
+  const plateLabel = document.getElementById("quote-plate-label");
+  const plateCell = document.getElementById("quote-plate");
+  const plateCountEl = document.getElementById("quote-plate-count");
   const totalCell = document.getElementById("quote-total");
   if (baseLabel) baseLabel.textContent = formatBaseLabel(slots);
   if (baseCell) baseCell.textContent = formatPogs(base);
@@ -153,6 +161,11 @@ function updateQuote() {
     timeLabel.textContent = `Time multiplier (${timeRule} · ${formatDuration(rates.seconds)})`;
   }
   if (timeCell) timeCell.textContent = formatMultiplier(timeMultiplier);
+  if (plateLabel) {
+    plateLabel.textContent = `Build plate fee (${rates.plateFeePerPlate} × ${plateCount} ${plateWord})`;
+  }
+  if (plateCell) plateCell.textContent = formatPogs(plateFee);
+  if (plateCountEl) plateCountEl.textContent = String(plateCount);
   if (totalCell) totalCell.textContent = formatPogs(total);
 }
 

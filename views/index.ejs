@@ -28,7 +28,7 @@
         <h1>MakerWorld print quote</h1>
         <p class="lede">
           Paste a MakerWorld model link. We’ll check whether it can print on an A1
-          and estimate a price in digipogs from filament weight, colors, and time.
+          and estimate a price in digipogs from filament weight, colors, time, and build plates.
         </p>
       </header>
 
@@ -94,6 +94,10 @@
               <dt>Time</dt>
               <dd><%= result.quote.formatted.duration %></dd>
             </div>
+            <div>
+              <dt>Plates</dt>
+              <dd id="quote-plate-count"><%= result.quote.plates %></dd>
+            </div>
             <% if (result.nozzle) { %>
             <div>
               <dt>Nozzle</dt>
@@ -136,6 +140,8 @@
             data-time-start="<%= priceRates.timeMultiplierStart %>"
             data-time-per-block="<%= priceRates.timeMultiplierPerBlock %>"
             data-time-block-hours="<%= priceRates.timeBlockHours %>"
+            data-plate-fee="<%= priceRates.plateFeePerPlate %>"
+            data-plates="<%= result.quote.plates %>"
             data-seconds="<%= result.quote.seconds %>"
           >
             <tr>
@@ -149,6 +155,10 @@
             <tr>
               <th id="quote-time-label">Time multiplier (<%= priceRates.timeMultiplierStart %> + <%= priceRates.timeMultiplierPerBlock %> per <%= priceRates.timeBlockHours %>h · <%= result.quote.formatted.duration %>)</th>
               <td id="quote-time"><%= result.quote.formatted.timeMultiplier %></td>
+            </tr>
+            <tr>
+              <th id="quote-plate-label">Build plate fee (<%= priceRates.plateFeePerPlate %> × <%= result.quote.plates %> plate<%= result.quote.plates === 1 ? "" : "s" %>)</th>
+              <td id="quote-plate"><%= result.quote.formatted.plateFee %></td>
             </tr>
             <tr class="total">
               <th>Total</th>
@@ -172,11 +182,13 @@
             timeMultiplierStart: priceRates.timeMultiplierStart,
             timeMultiplierPerBlock: priceRates.timeMultiplierPerBlock,
             timeBlockHours: priceRates.timeBlockHours,
+            plateFeePerPlate: priceRates.plateFeePerPlate,
+            plates: result.quote.plates,
             seconds: result.quote.seconds,
             grams: result.quote.grams,
             digipogsPerGram: result.quote.rates.digipogsPerGram
           }) %></script>
-          <script src="/quote.js?v=6"></script>
+          <script src="/quote.js?v=7"></script>
         <% } else { %>
           <p class="reject">Not quoted for an A1</p>
           <ul class="reasons">
@@ -204,16 +216,24 @@
             >
               <div class="queue-main">
                 <strong><%= i + 1 %>. <%= job.title %></strong>
-                <span class="muted"><%= job.user_name %> · <%= job.amount %> digipogs</span>
+                <span class="muted">
+                  <%= job.user_name %> · <%= job.amount %> digipogs
+                  <% if (job.status === 'started') { %> · started<% } %>
+                </span>
               </div>
             </button>
             <% if (isAdmin) { %>
             <div class="queue-actions">
-              <form method="post" action="/queue/<%= job.id %>/complete">
-                <button type="submit">Complete</button>
+              <% if (job.status === 'queued') { %>
+              <form method="post" action="/queue/<%= job.id %>/start">
+                <button type="submit">Started</button>
               </form>
-              <form method="post" action="/queue/<%= job.id %>/refund">
-                <button type="submit" class="danger">Refund</button>
+              <% } %>
+              <form method="post" action="/queue/<%= job.id %>/complete">
+                <button type="submit">Completed</button>
+              </form>
+              <form method="post" action="/queue/<%= job.id %>/delete">
+                <button type="submit" class="danger">Delete</button>
               </form>
             </div>
             <% } %>
@@ -224,9 +244,9 @@
       </section>
 
       <section class="card">
-        <h2>Most printed</h2>
+        <h2>Top 10 purchased</h2>
         <% if (!topModels.length) { %>
-        <p class="muted">No completed prints yet.</p>
+        <p class="muted">No purchases yet.</p>
         <% } else { %>
         <ol class="top-models">
           <% topModels.forEach(function (m) { %>
@@ -235,13 +255,17 @@
               type="button"
               class="model-open top-model-open"
               data-id="<%= m.model_id %>"
+              data-url="<%= m.makerworld_url %>"
               aria-haspopup="dialog"
             >
               <% if (m.cover_url) { %>
               <img src="<%= m.cover_url %>" alt="" />
               <% } %>
-              <span><%= m.title %></span>
-              <strong><%= m.print_count %></strong>
+              <span>
+                <%= m.title %>
+                <small class="muted top-model-url"><%= m.makerworld_url %></small>
+              </span>
+              <strong><%= m.purchase_count %></strong>
             </button>
           </li>
           <% }) %>
@@ -264,6 +288,6 @@
         <a id="model-mw-link" href="#" target="_blank" rel="noopener">Open on MakerWorld</a>
       </div>
     </dialog>
-    <script src="/search.js?v=3"></script>
+    <script src="/search.js?v=4"></script>
   </body>
 </html>

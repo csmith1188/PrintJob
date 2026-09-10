@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS jobs (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   user_name TEXT NOT NULL,
+  user_email TEXT,
   model_id INTEGER NOT NULL,
   instance_id INTEGER,
   title TEXT,

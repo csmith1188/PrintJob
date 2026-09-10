@@ -29,7 +29,7 @@
     quoteUrl = "";
   }
 
-  async function openModel(id) {
+  async function openModel(id, preferredUrl) {
     clearDetail();
     titleEl.textContent = "Loading…";
     quoteBtn.disabled = true;
@@ -50,7 +50,7 @@
       titleEl.textContent = data.title || "Model";
       creatorEl.textContent = data.creator ? "by " + data.creator : "";
       summaryEl.textContent = data.summary || "No description.";
-      quoteUrl = data.makerworldUrl || "";
+      quoteUrl = preferredUrl || data.makerworldUrl || "";
       quoteBtn.disabled = !quoteUrl;
       mwLink.href = quoteUrl || "#";
       (data.pictures || []).forEach(function (src) {
@@ -67,7 +67,7 @@
 
   document.querySelectorAll(".search-card, .model-open").forEach(function (btn) {
     btn.addEventListener("click", function () {
-      openModel(btn.getAttribute("data-id"));
+      openModel(btn.getAttribute("data-id"), btn.getAttribute("data-url"));
     });
   });
 

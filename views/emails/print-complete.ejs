@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+  <body style="font-family: sans-serif; line-height: 1.5; color: #222;">
+    <h2>Your print is ready</h2>
+    <p>Hi <%= userName || "there" %>,</p>
+    <p>
+      Your print <strong><%= job.title %></strong> is done and ready for pickup.
+    </p>
+    <p><a href="<%- url %>">Open the print site</a></p>
+  </body>
+</html>

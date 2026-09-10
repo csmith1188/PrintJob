@@ -486,6 +486,18 @@ button.danger {
 .top-models li span,
 .top-model-open span {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.top-model-url {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8em;
 }
 
 .color-form {
