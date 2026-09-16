@@ -220,6 +220,16 @@
                   <%= job.user_name %> · <%= job.amount %> digipogs
                   <% if (job.status === 'started') { %> · started<% } %>
                 </span>
+                <% if (job.filaments && job.filaments.length) { %>
+                <ul class="queue-colors" aria-label="Selected colors">
+                  <% job.filaments.forEach(function (slot) { %>
+                  <li>
+                    <span class="dot" style="background: <%= slot.color || '#888' %>"></span>
+                    <span><%= [slot.material, slot.name && slot.name !== 'Default' ? slot.name : null].filter(Boolean).join(' ') || 'Color' %></span>
+                  </li>
+                  <% }) %>
+                </ul>
+                <% } %>
               </div>
             </button>
             <% if (isAdmin) { %>

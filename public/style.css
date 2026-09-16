@@ -465,6 +465,31 @@ button.danger {
   flex-direction: column;
 }
 
+.queue-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.queue .queue-colors li {
+  display: inline-flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0;
+  border: 0;
+}
+
+.queue-colors .dot {
+  margin-right: 0;
+  flex: 0 0 auto;
+}
+
 .queue-actions {
   display: flex;
   gap: 0.4rem;
