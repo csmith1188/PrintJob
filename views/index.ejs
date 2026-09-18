@@ -176,6 +176,26 @@
           <p class="warning">Log in with Formbar to pay and join the print queue.</p>
           <% } %>
           </form>
+          <% if (user) { %>
+          <dialog class="model-modal confirm-modal" id="purchase-modal" aria-labelledby="purchase-title">
+            <div class="model-modal-head">
+              <h2 id="purchase-title">Confirm purchase</h2>
+              <button type="button" class="ghost" id="purchase-cancel">Cancel</button>
+            </div>
+            <p class="warning">
+              <ul>
+                <li>I acknowledge that complex models such as figurines will have a lot of support material that needs removed.</li>
+                <li>I acknowledge that I am responsible for removing the support material after the print is complete.</li>
+                <li>I acknowledge that some models are poorly designed and will not print correctly.</li>
+                <li>I acknowledge that 3d prints may break from poor design or support material removal.</li>
+              </ul>
+            </p>
+            <p>This will charge <strong id="purchase-amount"></strong> and add the print to the queue.</p>
+            <div class="model-actions">
+              <button type="button" id="purchase-confirm">Confirm payment</button>
+            </div>
+          </dialog>
+          <% } %>
           <script type="application/json" id="quote-rates"><%- JSON.stringify({
             colorMultiplierStart: priceRates.colorMultiplierStart,
             colorMultiplierPerExtra: priceRates.colorMultiplierPerExtra,
@@ -188,7 +208,7 @@
             grams: result.quote.grams,
             digipogsPerGram: result.quote.rates.digipogsPerGram
           }) %></script>
-          <script src="/quote.js?v=7"></script>
+          <script src="/quote.js?v=9"></script>
         <% } else { %>
           <p class="reject">Not quoted for an A1</p>
           <ul class="reasons">

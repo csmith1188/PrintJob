@@ -177,8 +177,96 @@ function bindFilamentSelects() {
   updateQuote();
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", bindFilamentSelects);
-} else {
+function bindPurchaseConfirm() {
+  const form = document.getElementById("queue-form");
+  const modal = document.getElementById("purchase-modal");
+  if (!form || !modal) return;
+
+  if (modal.parentElement !== document.body) {
+    document.body.appendChild(modal);
+  }
+
+  const amountEl = document.getElementById("purchase-amount");
+  const confirmBtn = document.getElementById("purchase-confirm");
+  const cancelBtn = document.getElementById("purchase-cancel");
+  const payBtn = form.querySelector(".pay-row button[type='submit']");
+  let confirmed = false;
+
+  function closeModal() {
+    if (typeof modal.close === "function" && modal.open) {
+      modal.close();
+    }
+    modal.removeAttribute("open");
+  }
+
+  function openModal() {
+    const total = document.getElementById("quote-total");
+    if (amountEl) amountEl.textContent = total ? total.textContent : "";
+    try {
+      if (modal.open) closeModal();
+      if (typeof modal.showModal === "function") {
+        modal.showModal();
+      } else {
+        modal.setAttribute("open", "");
+      }
+    } catch (err) {
+      modal.setAttribute("open", "");
+    }
+  }
+
+  function submitPurchase() {
+    confirmed = true;
+    closeModal();
+    window.setTimeout(function () {
+      HTMLFormElement.prototype.submit.call(form);
+    }, 0);
+  }
+
+  form.addEventListener("submit", function (event) {
+    if (confirmed) return;
+    event.preventDefault();
+    if (typeof form.reportValidity === "function" && !form.reportValidity()) {
+      return;
+    }
+    openModal();
+  });
+
+  if (payBtn) {
+    payBtn.addEventListener("click", function (event) {
+      if (confirmed) return;
+      event.preventDefault();
+      if (typeof form.reportValidity === "function" && !form.reportValidity()) {
+        return;
+      }
+      openModal();
+    });
+  }
+
+  if (confirmBtn) {
+    confirmBtn.addEventListener("click", function (event) {
+      event.preventDefault();
+      submitPurchase();
+    });
+  }
+
+  if (cancelBtn) {
+    cancelBtn.addEventListener("click", function () {
+      closeModal();
+    });
+  }
+
+  modal.addEventListener("click", function (event) {
+    if (event.target === modal) closeModal();
+  });
+}
+
+function initQuotePage() {
+  bindPurchaseConfirm();
   bindFilamentSelects();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initQuotePage);
+} else {
+  initQuotePage();
 }
