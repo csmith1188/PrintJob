@@ -45,6 +45,7 @@ const {
   startJob,
   completeJob,
   refundJob,
+  getAnalytics,
   slugify,
   validHex,
 } = require("./lib/store");
@@ -528,6 +529,16 @@ app.post("/queue/:id/delete", requireAuth, requireAdmin, async (req, res) => {
   }
   await refundJob(job.id);
   res.redirect("/");
+});
+
+app.get("/admin/analytics", requireAuth, requireAdmin, async (req, res) => {
+  const analytics = await getAnalytics();
+  res.render("admin-analytics", {
+    user: req.session.user,
+    isAdmin: true,
+    totals: analytics.totals,
+    repeatBuyers: analytics.repeatBuyers,
+  });
 });
 
 app.get("/admin/colors", requireAuth, requireAdmin, async (req, res) => {

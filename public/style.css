@@ -573,6 +573,75 @@ section.card {
   margin-top: 1rem;
 }
 
+.analytics-stats dd {
+  margin: 0.15rem 0 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.buyer-card {
+  border-top: 1px solid var(--line);
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+
+.buyer-card:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+  margin-top: 0.5rem;
+}
+
+.buyer-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.buyer-header h3 {
+  margin: 0 0 0.2rem;
+}
+
+.buyer-header .muted {
+  margin: 0;
+}
+
+.buyer-stats {
+  margin: 0;
+  min-width: 12rem;
+}
+
+.buyer-card h4 {
+  margin: 0.85rem 0 0.4rem;
+  font-size: 0.9rem;
+}
+
+.analytics-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.analytics-list li {
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.analytics-list li:last-child {
+  border-bottom: 0;
+}
+
+.analytics-list-main {
+  font-size: 0.95rem;
+}
+
+.analytics-list-meta {
+  font-size: 0.8rem;
+  margin-top: 0.15rem;
+}
+
 @media (max-width: 560px) {
   .row {
     flex-direction: column;

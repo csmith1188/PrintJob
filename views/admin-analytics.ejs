@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Analytics</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div class="hero-top">
+          <p class="eyebrow">Admin</p>
+          <nav class="nav">
+            <a href="/">Home</a>
+            <a href="/search">Search</a>
+            <a href="/admin/analytics">Analytics</a>
+            <a href="/admin/colors">Colors</a>
+            <span><%= user %></span>
+            <a href="/logout">Log out</a>
+          </nav>
+        </div>
+        <h1>Analytics</h1>
+        <p class="lede">
+          Digipog totals and profiles for users with multiple purchases.
+        </p>
+      </header>
+
+      <section class="card">
+        <h2>Totals</h2>
+        <div class="stats analytics-stats">
+          <div>
+            <dt>Total spent</dt>
+            <dd><%= totals.spent %> digipogs</dd>
+          </div>
+          <div>
+            <dt>Refunded</dt>
+            <dd><%= totals.refunded %> digipogs</dd>
+          </div>
+          <div>
+            <dt>Net retained</dt>
+            <dd><%= totals.net %> digipogs</dd>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Repeat buyers</h2>
+        <% if (!repeatBuyers.length) { %>
+        <p class="muted">No users with two or more non-refunded purchases yet.</p>
+        <% } else { %>
+          <% repeatBuyers.forEach(function (buyer) { %>
+          <article class="buyer-card">
+            <header class="buyer-header">
+              <div>
+                <h3><%= buyer.user_name %></h3>
+                <% if (buyer.user_email) { %>
+                <p class="muted"><%= buyer.user_email %></p>
+                <% } %>
+                <p class="muted">User #<%= buyer.user_id %></p>
+              </div>
+              <div class="stats analytics-stats buyer-stats">
+                <div>
+                  <dt>Purchases</dt>
+                  <dd><%= buyer.purchase_count %></dd>
+                </div>
+                <div>
+                  <dt>Spent</dt>
+                  <dd><%= buyer.total_spent %> digipogs</dd>
+                </div>
+              </div>
+            </header>
+
+            <h4>Recent jobs</h4>
+            <% if (!buyer.jobs.length) { %>
+            <p class="muted">No jobs.</p>
+            <% } else { %>
+            <ul class="analytics-list">
+              <% buyer.jobs.forEach(function (job) { %>
+              <li>
+                <div class="analytics-list-main">
+                  <% if (job.makerworld_url) { %>
+                  <a href="<%= job.makerworld_url %>" target="_blank" rel="noopener">
+                    <%= job.title || "Untitled" %>
+                  </a>
+                  <% } else { %>
+                  <span><%= job.title || "Untitled" %></span>
+                  <% } %>
+                  <% if (job.profile_title) { %>
+                  <span class="muted"> · <%= job.profile_title %></span>
+                  <% } %>
+                </div>
+                <div class="analytics-list-meta muted">
+                  #<%= job.id %> · <%= job.status %> · <%= job.amount %> digipogs
+                  <% if (job.created_at) { %>
+                  · <%= job.created_at.slice(0, 10) %>
+                  <% } %>
+                </div>
+              </li>
+              <% }) %>
+            </ul>
+            <% } %>
+
+            <h4>Print profiles</h4>
+            <% if (!buyer.profiles.length) { %>
+            <p class="muted">No print profiles.</p>
+            <% } else { %>
+            <ul class="analytics-list">
+              <% buyer.profiles.forEach(function (profile) { %>
+              <li>
+                <div class="analytics-list-main">
+                  <% if (profile.makerworld_url) { %>
+                  <a href="<%= profile.makerworld_url %>" target="_blank" rel="noopener">
+                    <%= profile.profile_title || profile.title || "Untitled profile" %>
+                  </a>
+                  <% } else { %>
+                  <span><%= profile.profile_title || profile.title || "Untitled profile" %></span>
+                  <% } %>
+                  <% if (profile.title && profile.profile_title) { %>
+                  <span class="muted"> · <%= profile.title %></span>
+                  <% } %>
+                </div>
+                <div class="analytics-list-meta muted">
+                  Bought <%= profile.purchase_count %>×
+                </div>
+              </li>
+              <% }) %>
+            </ul>
+            <% } %>
+          </article>
+          <% }) %>
+        <% } %>
+      </section>
+    </main>
+  </body>
+</html>
